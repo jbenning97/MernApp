@@ -19,6 +19,11 @@ type Issue {
   description: String
 }
 
+type IssueListWithPages {
+  issues: [Issue!]!
+  pages: Int
+}
+
 "Toned down Issue, used as inputs, without server generated values."
 input IssueInputs {
   title: String!
@@ -41,6 +46,14 @@ input IssueUpdateInputs {
   description: String
 }
 
+type IssueCounts {
+  owner: String!
+  New: Int
+  Assigned: Int
+  Fixed: Int
+  Closed: Int
+}
+
 ##### Top level declarations
 type Query {
   about: String!
@@ -48,8 +61,15 @@ type Query {
     status: StatusType
     effortMin: Int
     effortMax: Int
-  ): [Issue!]!
+    search: String
+    page: Int = 1
+  ): IssueListWithPages
   issue(id: Int!): Issue!
+  issueCounts(
+    status: StatusType
+    effortMin: Int
+    effortMax: Int
+  ): [IssueCounts!]!
 }
 
 type Mutation {
@@ -57,4 +77,5 @@ type Mutation {
   issueAdd(issue: IssueInputs!): Issue!
   issueUpdate(id: Int!, changes: IssueUpdateInputs!): Issue!
   issueDelete(id: Int!): Boolean!
+  issueRestore(id: Int!): Boolean!
 }

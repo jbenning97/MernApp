@@ -10,10 +10,10 @@ import graphQLFetch from './graphQLFetch.js';
 import NumInput from './NumInput.jsx';
 import DateInput from './DateInput.jsx';
 import TextInput from './TextInput.jsx';
-import Toast from './Toast.jsx';
+import withToast from './withToast.jsx';
 import store from './store.js';
 
-export default class IssueEdit extends React.Component {
+class IssueEdit extends React.Component {
   static async fetchData(match, search, showError) {
     const query = `query issue($newId: Int!) {
       issue(id: $newId) {
@@ -36,18 +36,12 @@ export default class IssueEdit extends React.Component {
       issue,
       invalidFields: {},
       showingValidation: false,
-      toastVisible: false,
-      toastMessage: '',
-      toastType: 'success',
     };
     this.onChange = this.onChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onValidityChange = this.onValidityChange.bind(this);
     this.dismissValidation = this.dismissValidation.bind(this);
     this.showValidation = this.showValidation.bind(this);
-    this.showSuccess = this.showSuccess.bind(this);
-    this.showError = this.showError.bind(this);
-    this.dismissToast = this.dismissToast.bind(this);
   }
 
   componentDidMount() {
@@ -100,16 +94,17 @@ export default class IssueEdit extends React.Component {
     }`;
 
     const { id, created, ...changes } = issue;
-    const data = await graphQLFetch(query, { changes, id }, this.showError);
+    const { showSuccess, showError } = this.props;
+    const data = await graphQLFetch(query, { changes, id }, showError);
     if (data) {
       this.setState({ issue: data.issueUpdate });
-      this.showSuccess('Updated issue successfully');
+      showSuccess('Updated issue successfully');
     }
   }
 
   async loadData() {
-    const { match } = this.props;
-    const data = await IssueEdit.fetchData(match, null, this.showError);
+    const { match, showError } = this.props;
+    const data = await IssueEdit.fetchData(match, null, showError);
     this.setState({ issue: data ? data.issue : {}, invalidFields: {} });
   }
 
@@ -119,22 +114,6 @@ export default class IssueEdit extends React.Component {
 
   dismissValidation() {
     this.setState({ showingValidation: false });
-  }
-
-  showSuccess(message) {
-    this.setState({
-      toastVisible: true, toastMessage: message, toastType: 'success',
-    });
-  }
-
-  showError(message) {
-    this.setState({
-      toastVisible: true, toastMessage: message, toastType: 'danger',
-    });
-  }
-
-  dismissToast() {
-    this.setState({ toastVisible: false });
   }
 
   render() {
@@ -160,12 +139,9 @@ export default class IssueEdit extends React.Component {
       );
     }
 
-
     const { issue: { title, status } } = this.state;
     const { issue: { owner, effort, description } } = this.state;
     const { issue: { created, due } } = this.state;
-    const { toastVisible, toastMessage, toastType } = this.state;
-
 
     return (
       <Panel>
@@ -284,14 +260,12 @@ export default class IssueEdit extends React.Component {
           {' | '}
           <Link to={`/edit/${id + 1}`}>Next</Link>
         </Panel.Footer>
-        <Toast
-          showing={toastVisible}
-          onDismiss={this.dismissToast}
-          bsStyle={toastType}
-        >
-          {toastMessage}
-        </Toast>
       </Panel>
     );
   }
 }
+
+const IssueEditWithToast = withToast(IssueEdit);
+IssueEditWithToast.fetchData = IssueEdit.fetchData;
+
+export default IssueEditWithToast;
